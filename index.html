@@ -17,6 +17,7 @@
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.min.js" } }
   </script>
+  <link rel="modulepreload" href="vendor/three.module.min.js">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -38,10 +39,6 @@
   <div class="loader" aria-hidden="true">
     <svg class="loader__logo" viewBox="-12 -12 424 128">
       <defs>
-        <filter id="lg-glow" x="-20%" y="-40%" width="140%" height="180%">
-          <feGaussianBlur stdDeviation="3.5" result="b" />
-          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
         <linearGradient id="lg-shine" x1="0" x2="1">
           <stop offset="0" stop-color="#fff" stop-opacity="0" />
           <stop offset=".5" stop-color="#fff" stop-opacity=".55" />
@@ -53,7 +50,12 @@
       <rect class="lg-fill" x="2" y="2" width="396" height="100" fill="#1a3c6e" />
       <rect class="lg-fill lg-fill--mid" x="84" y="2" width="96" height="100" fill="#f2f4f8" />
       <path class="lg-fill lg-fill--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z" fill="#1a3c6e" />
-      <g class="lg-lines" filter="url(#lg-glow)">
+      <g class="lg-lines lg-lines--glow" aria-hidden="true">
+        <rect class="draw" x="2" y="2" width="396" height="100" />
+        <path class="draw" d="M84 2 V102 M180 2 V102" />
+        <path class="draw draw--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z M92 40 L110 22 L121 40 L132 22 L143 40 L154 22 L172 40 M92 40 L172 40 M121 40 L132 86 L143 40" />
+      </g>
+      <g class="lg-lines">
         <rect class="draw" x="2" y="2" width="396" height="100" />
         <path class="draw" d="M84 2 V102 M180 2 V102" />
         <path class="draw draw--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z M92 40 L110 22 L121 40 L132 22 L143 40 L154 22 L172 40 M92 40 L172 40 M121 40 L132 86 L143 40" />

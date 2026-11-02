@@ -34,9 +34,19 @@ function hideLoader() {
   setTimeout(startReveals, 250);
   window.dispatchEvent(new Event('mdentic:ready'));
 }
-const minIntro = new Promise(r => setTimeout(r, reduceMotion ? 200 : 2900));
-Promise.all([minIntro, document.fonts.ready]).then(hideLoader);
-setTimeout(hideLoader, 5000); // zabezpieczenie
+// Kolejność ładowania: 1) logo rysuje się płynnie, bez żadnej ciężkiej pracy w tle,
+// 2) gdy logo już stoi, przygotowujemy scenę WebGL (to chwilę blokuje wątek, ale
+// nic się wtedy nie animuje, więc nie widać „lagów”), 3) dopiero wtedy loader znika.
+const logoDrawn = new Promise(r => setTimeout(r, reduceMotion ? 200 : 2600));
+Promise.all([logoDrawn, document.fonts.ready])
+  .then(() => import('three'))
+  .then(THREE => initGL(THREE))
+  .catch(err => {
+    console.warn('WebGL niedostępny:', err);
+    body.classList.add('no-webgl');
+  })
+  .finally(() => requestAnimationFrame(() => requestAnimationFrame(hideLoader)));
+setTimeout(hideLoader, 9000); // zabezpieczenie
 
 // nawigacja: tło po scrollu i aktywny link
 const nav = document.querySelector('.nav');
@@ -74,10 +84,7 @@ document.querySelectorAll('.card').forEach(card => {
 
 /* ============================ WebGL ============================= */
 
-import('three').then(initGL).catch(err => {
-  console.warn('WebGL niedostępny:', err);
-  body.classList.add('no-webgl');
-});
+// scena startuje z sekwencji ładowania powyżej (initGL)
 
 /* ---- kształty (współrzędne znormalizowane mniej więcej do [-1, 1]) ---- */
 
@@ -109,10 +116,21 @@ function fromPaths(defs, n, seed) {
   items.forEach((it, idx) => {
     const count = idx === items.length - 1 ? n - k : Math.round(n * it.weight / total);
     const { cx = 50, cy = 50, k: sc = 50, z = 0, jitter = 0.35 } = it.def;
+    // getPointAtLength jest wolne, więc próbkujemy ścieżkę raz (tablica punktów)
+    // i dalej tylko interpolujemy liniowo
+    const SAMPLES = 400;
+    const lut = new Float32Array((SAMPLES + 1) * 2);
+    for (let j = 0; j <= SAMPLES; j++) {
+      const pt = it.el.getPointAtLength(j / SAMPLES * it.len);
+      lut[j * 2] = pt.x; lut[j * 2 + 1] = pt.y;
+    }
     for (let i = 0; i < count && k < n; i++, k++) {
-      const pt = it.el.getPointAtLength((i + r()) / count * it.len);
-      out[k * 3] = (pt.x - cx + (r() - 0.5) * jitter) / sc;
-      out[k * 3 + 1] = -(pt.y - cy + (r() - 0.5) * jitter) / sc;
+      const f = (i + r()) / count * SAMPLES;
+      const j = Math.min(SAMPLES - 1, Math.floor(f)), t = f - j;
+      const px = lut[j * 2] + (lut[j * 2 + 2] - lut[j * 2]) * t;
+      const py = lut[j * 2 + 1] + (lut[j * 2 + 3] - lut[j * 2 + 1]) * t;
+      out[k * 3] = (px - cx + (r() - 0.5) * jitter) / sc;
+      out[k * 3 + 1] = -(py - cy + (r() - 0.5) * jitter) / sc;
       out[k * 3 + 2] = z + (r() - 0.5) * 0.02;
     }
     it.el.remove();
@@ -228,7 +246,12 @@ async function initGL(THREE) {
 
   const small = innerWidth < 760;
   const N = small ? 9000 : 18000;
-  const shapes = [toothShape(N), diamondShape(N), linesShape(N), textShape(N), pinShape(N)];
+  // kształty liczymy po kolei, oddając przeglądarce oddech między nimi
+  const shapes = [];
+  for (const make of [toothShape, diamondShape, linesShape, textShape, pinShape]) {
+    shapes.push(make(N));
+    await new Promise(res => setTimeout(res, 0));
+  }
   const S = shapes.length;
 
   const geo = new THREE.BufferGeometry();
@@ -454,5 +477,8 @@ async function initGL(THREE) {
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
+  // kompilacja shaderów i pierwsza klatka jeszcze pod loaderem
+  renderer.compile(scene, camera);
+  renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
