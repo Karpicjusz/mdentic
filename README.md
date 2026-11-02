@@ -32,11 +32,11 @@ python3 -m http.server 8080
 
 Settings → Pages → Source: *Deploy from a branch* → `main` / `/ (root)`.
 
-## Co podmienić
+## Dane gabinetu
 
-Dane kontaktowe w sekcji `#kontakt` w `index.html` (adres, telefon, e-mail,
-godziny) są **tymczasowe**. Numer telefonu występuje też w przyciskach
-„Umów wizytę” (`tel:+48000000000`).
+Adres, telefon i godziny są w sekcji `#kontakt` w `index.html` oraz w danych
+strukturalnych `application/ld+json` w `<head>` (dla Google). Numer telefonu
+występuje też w przyciskach `tel:+48600931032`.
 
 ## Struktura
 

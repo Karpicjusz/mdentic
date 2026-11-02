@@ -162,6 +162,8 @@ h2 { font-size: clamp(34px, 5vw, 60px); line-height: 1.08; margin-bottom: 26px; 
 .contact__item a { text-decoration: none; border-bottom: 1px solid var(--line); transition: border-color .3s; }
 .contact__item a:hover { border-color: var(--accent); }
 .hours { border-collapse: collapse; font-size: 15px; }
+.contact__sub { margin-top: 22px; }
+.contact__item--wide { grid-column: 1 / -1; }
 .hours td { padding: 3px 18px 3px 0; color: var(--ice); }
 .hours td:first-child { color: var(--ice-dim); }
 
