@@ -21,6 +21,7 @@ const io = new IntersectionObserver(entries => {
 }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
 
 function startReveals() {
+  body.classList.add('revealed');
   document.querySelector('.hero__title').classList.add('in');
   document.querySelectorAll('.reveal, .eyebrow').forEach(el => io.observe(el));
 }
@@ -31,14 +32,25 @@ function hideLoader() {
   loaderHidden = true;
   document.querySelector('.loader').classList.add('done');
   body.classList.remove('loading');
-  setTimeout(startReveals, 250);
+  // treść pojawia się, gdy cząsteczki już lecą do zęba — logo ma czystą scenę na rozprysk
+  setTimeout(startReveals, reduceMotion ? 0 : 1300);
   window.dispatchEvent(new Event('mdentic:ready'));
 }
-// Kolejność ładowania: 1) logo rysuje się płynnie, bez żadnej ciężkiej pracy w tle,
-// 2) gdy logo już stoi, przygotowujemy scenę WebGL (to chwilę blokuje wątek, ale
-// nic się wtedy nie animuje, więc nie widać „lagów”), 3) dopiero wtedy loader znika.
-const logoDrawn = new Promise(r => setTimeout(r, reduceMotion ? 200 : 2600));
-Promise.all([logoDrawn, document.fonts.ready])
+// Kolejność ładowania (żeby nic się nie rwało):
+// 1) czekamy, aż strona i czcionki się wczytają — dopiero wtedy startuje rysowanie logo,
+// 2) logo rysuje się jedną ciągłą linią; w tle nie dzieje się nic ciężkiego,
+// 3) gdy logo stoi, przygotowujemy scenę WebGL (logo tylko pulsuje na compositorze),
+// 4) loader znika, a w tym samym miejscu logo z cząsteczek rozpryskuje się i składa w ząb.
+const loaderEl = document.querySelector('.loader');
+const pageLoaded = new Promise(r => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+const DRAW_MS = reduceMotion ? 50 : 3300;
+const logoDrawn = Promise.race([
+  Promise.all([pageLoaded, document.fonts.ready]),
+  new Promise(r => setTimeout(r, 2500)), // nie czekamy w nieskończoność na wolne czcionki
+]).then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))
+  .then(() => { loaderEl.classList.add('go'); return new Promise(r => setTimeout(r, DRAW_MS)); });
+
+logoDrawn
   .then(() => import('three'))
   .then(THREE => initGL(THREE))
   .catch(err => {
@@ -46,7 +58,7 @@ Promise.all([logoDrawn, document.fonts.ready])
     body.classList.add('no-webgl');
   })
   .finally(() => requestAnimationFrame(() => requestAnimationFrame(hideLoader)));
-setTimeout(hideLoader, 9000); // zabezpieczenie
+setTimeout(hideLoader, 14000); // zabezpieczenie
 
 // nawigacja: tło po scrollu i aktywny link
 const nav = document.querySelector('.nav');
@@ -135,6 +147,39 @@ function fromPaths(defs, n, seed) {
     }
     it.el.remove();
   });
+  return out;
+}
+
+/* Logo z cząsteczek — te same linie, które rysuje SVG w loaderze (index.html).
+   Współrzędne w jednostkach viewBox loadera, środek (200, 52). */
+const LOGO_PATH = 'M2 2 H398 V102 H2 Z M84 2 V102 M180 2 V102 M92 40 L110 22 L154 22 L172 40 L132 86 Z M92 40 L172 40 M110 22 L121 40 L132 22 L143 40 L154 22 M121 40 L132 86 L143 40';
+
+function logoShape(n) {
+  const nLines = Math.round(n * 0.6);
+  const lines = fromPaths([{ d: LOGO_PATH, cx: 200, cy: 52, k: 1, jitter: 0.8 }], nLines, 66);
+  // napisy „M” i „dentic” próbkowane z canvasa w tej samej skali co SVG
+  const SC = 4, W = 424 * SC, H = 128 * SC;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.scale(SC, SC); g.translate(12, 12);
+  g.font = '400 64px "Open Sans", sans-serif';
+  g.textAlign = 'center'; g.fillStyle = '#fff';
+  g.fillText('M', 43, 76);
+  g.fillText('dentic', 288, 76);
+  const data = g.getImageData(0, 0, W, H).data;
+  const px = [];
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (data[(y * W + x) * 4 + 3] > 128) px.push(x, y);
+  const r = rand(67);
+  const out = new Float32Array(n * 3);
+  out.set(lines);
+  for (let i = nLines; i < n; i++) {
+    const j = px.length ? Math.floor(r() * (px.length / 2)) * 2 : 0;
+    const x = (px[j] ?? W / 2) / SC - 12, y = (px[j + 1] ?? H / 2) / SC - 12;
+    out[i * 3] = x - 200 + (r() - 0.5) * 0.4;
+    out[i * 3 + 1] = -(y - 52) + (r() - 0.5) * 0.4;
+    out[i * 3 + 2] = 0;
+  }
   return out;
 }
 
@@ -252,11 +297,14 @@ async function initGL(THREE) {
     shapes.push(make(N));
     await new Promise(res => setTimeout(res, 0));
   }
+  try { await document.fonts.load('400 64px "Open Sans"'); } catch (e) { /* czcionka zastępcza */ }
+  const logoPts = logoShape(N);
   const S = shapes.length;
 
   const geo = new THREE.BufferGeometry();
   shapes.forEach((arr, i) => geo.setAttribute(`p${i}`, new THREE.BufferAttribute(arr, 3)));
   geo.setAttribute('position', new THREE.BufferAttribute(shapes[0], 3));
+  geo.setAttribute('pS', new THREE.BufferAttribute(logoPts, 3));
   const rnd = new Float32Array(N * 4);
   const r = rand(99);
   for (let i = 0; i < rnd.length; i++) rnd[i] = r();
@@ -266,6 +314,7 @@ async function initGL(THREE) {
     uTime: { value: 0 },
     uIdx: { value: 0 },
     uIntro: { value: reduceMotion ? 1 : 0 },
+    uLogo: { value: 0.01 },
     uSize: { value: small ? 2.6 : 2.3 },
     uPR: { value: PR },
     uRot: { value: 0 },
@@ -285,7 +334,7 @@ async function initGL(THREE) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */`
-      uniform float uTime, uIdx, uIntro, uSize, uPR, uRot, uMouseOn;
+      uniform float uTime, uIdx, uIntro, uSize, uPR, uRot, uMouseOn, uLogo;
       uniform vec2 uMouse;
       uniform vec3 uOff[${S}];
       uniform vec3 uScl[${S}];
@@ -293,6 +342,7 @@ async function initGL(THREE) {
       uniform float uRk[${S}];
       attribute vec3 p0; attribute vec3 p1; attribute vec3 p2; attribute vec3 p3; attribute vec3 p4;
       attribute vec4 aRnd;
+      attribute vec3 pS;
       varying float vAlpha;
       varying float vTint;
 
@@ -334,11 +384,14 @@ async function initGL(THREE) {
         // delikatne „oddychanie”
         p += vec3(sin(uTime * 0.9 + sd.x), cos(uTime * 0.8 + sd.y), sin(uTime * 0.7 + sd.z)) * 0.012;
 
-        // intro: cząsteczki zlatują się z głębi
-        float it = clamp((uIntro - aRnd.y * 0.45) / 0.55, 0.0, 1.0);
-        it = 1.0 - pow(1.0 - it, 3.0);
-        vec3 start = normalize(vec3(aRnd.z - 0.5, aRnd.w - 0.5, aRnd.x - 0.3) + 1e-3) * (7.0 + aRnd.y * 10.0);
-        p = mix(start, p, it);
+        // intro: cząsteczki startują dokładnie w liniach logo z loadera,
+        // rozpryskują się na boki i lecą do zęba
+        float it = clamp((uIntro - aRnd.y * 0.4) / 0.6, 0.0, 1.0);
+        float ie = it * it * (3.0 - 2.0 * it);
+        vec3 start = pS * uLogo;
+        vec3 burstDir = normalize(vec3(start.xy, 0.0) + (vec3(aRnd.z, aRnd.w, aRnd.x) - 0.5) * 1.2 + 1e-3);
+        float burst = sin(ie * 3.14159) * (0.3 + aRnd.w * 0.9);
+        p = mix(start, p, ie) + burstDir * burst;
 
         // odpychanie kursorem
         vec2 d = p.xy - uMouse;
@@ -349,7 +402,7 @@ async function initGL(THREE) {
         gl_Position = projectionMatrix * mv;
         gl_PointSize = uSize * (0.45 + aRnd.x * 1.1) * uPR * (10.0 / -mv.z) * (1.0 + chaos * 0.6);
 
-        vAlpha = mix(uA[i], uA[j], t) * (0.35 + 0.65 * aRnd.w) * (0.15 + 0.85 * it) + chaos * 0.12;
+        vAlpha = mix(uA[i], uA[j], t) * (0.35 + 0.65 * aRnd.w) * (0.55 + 0.45 * ie) + chaos * 0.12;
         vTint = aRnd.z + m * 3.0 + chaos * 0.3;
       }
     `,
@@ -407,6 +460,8 @@ async function initGL(THREE) {
     set(2, 0, 0, viewW * 0.56, viewH * 0.46, 1);
     set(3, cx, cy, mobile ? viewW * 0.44 : s * 1.25);
     set(4, cx, cy, s * 0.95);
+    // skala logo z cząsteczek = skala SVG w loaderze (szerokość min(480px, 84vw), viewBox 424)
+    uniforms.uLogo.value = (Math.min(480, w * 0.84) / 424) * (viewH / h);
   }
   layout();
   addEventListener('resize', layout);
@@ -460,7 +515,7 @@ async function initGL(THREE) {
     uniforms.uIdx.value = Math.min(S - 1 - 1e-4, Math.max(0, idx));
 
     if (!reduceMotion && introStart > 0) {
-      uniforms.uIntro.value = Math.min(1, (now - introStart) / 2800);
+      uniforms.uIntro.value = Math.min(1, (now - introStart) / 3000);
     }
 
     mouse.x += (mouse.tx - mouse.x) * 0.08;

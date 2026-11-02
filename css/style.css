@@ -47,25 +47,26 @@ body.no-webgl #gl { display: none; }
 .loader {
   position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
   background: radial-gradient(70% 60% at 50% 50%, #1d4580 0%, #0f2a52 45%, var(--navy-ink) 100%);
-  transition: opacity .9s var(--ease), visibility .9s;
+  transition: opacity .7s ease-out, visibility .7s;
 }
 .loader.done { opacity: 0; visibility: hidden; }
-.loader__logo { width: min(480px, 84vw); overflow: visible; will-change: transform, opacity; animation: breathe 1.6s ease-in-out 2.5s infinite alternate; }
-/* „oddychanie” działa na compositorze, więc jest płynne nawet gdy przeglądarka liczy scenę WebGL */
-@keyframes breathe { from { transform: scale(1); opacity: 1; } to { transform: scale(1.035); opacity: .82; } }
+.loader__logo { width: min(480px, 84vw); overflow: visible; will-change: opacity; }
+/* Wszystkie animacje loadera czekają na .go, czyli aż strona skończy się wczytywać,
+   żeby rysowanie nie konkurowało z parsowaniem i czcionkami (stąd brało się „szarpanie”). */
+.loader__logo * { animation-play-state: paused !important; }
+.loader.go .loader__logo * { animation-play-state: running !important; }
+/* gdy przeglądarka liczy scenę, logo delikatnie pulsuje samą przezroczystością (compositor, bez zacięć) */
+.loader.go .loader__logo { animation: breathe 1.4s ease-in-out 3.3s infinite alternate; }
+@keyframes breathe { to { opacity: .8; } }
 .loader__logo .draw {
-  fill: none; stroke: #fff; stroke-width: 3; stroke-linejoin: round;
-  stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: draw 1.3s var(--ease) forwards;
+  fill: none; stroke: #fff; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round;
+  stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: draw 2.1s cubic-bezier(.45, .05, .35, 1) forwards;
 }
-.loader__logo .draw:nth-child(2) { animation-delay: .2s; }
-.lg-lines--glow .draw { stroke: #9fdcff; stroke-width: 9; opacity: .22; }
-.lg-lines--glow .draw--gem { stroke-width: 8; }
+.loader__logo .draw--glow { stroke: #9fdcff; stroke-width: 9; opacity: .22; }
+.lg-fill { opacity: 0; animation: fade .8s ease-out 1.85s forwards; }
+.loader__txt { font: 400 64px "Open Sans", sans-serif; fill: #fff; opacity: 0; animation: fade .8s ease-out 1.85s forwards; }
+.lg-shine { animation: shine .9s var(--ease) 2.45s forwards; }
 body.loading .grain { animation-play-state: paused; }
-.loader__logo .draw--gem { animation-delay: .35s; stroke-width: 2.6; }
-.lg-fill { opacity: 0; animation: fade .7s var(--ease) 1.1s forwards; }
-.lg-fill--mid, .lg-fill--gem { animation-delay: 1.3s; }
-.loader__txt { font: 400 64px "Open Sans", sans-serif; fill: #fff; opacity: 0; animation: fade .8s 1.2s forwards; }
-.lg-shine { animation: shine .9s var(--ease) 1.55s forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes fade { to { opacity: 1; } }
 @keyframes shine { to { transform: translateX(560px); } }
@@ -111,7 +112,8 @@ h2 { font-size: clamp(34px, 5vw, 60px); line-height: 1.08; margin-bottom: 26px; 
 .sec p { color: var(--ice-dim); }
 .lead { font-size: clamp(17px, 1.5vw, 20px); max-width: 460px; }
 
-.sec--hero .sec__inner { width: min(640px, 48vw, 100%); }
+.sec--hero .sec__inner { width: min(640px, 48vw, 100%); transition: opacity 1s ease-out; }
+body:not(.revealed) .sec--hero .sec__inner, body:not(.revealed) .scroll-hint { opacity: 0; }
 .hero__title { font-size: clamp(44px, 6.4vw, 104px); line-height: .98; font-weight: 200; margin-bottom: 30px; }
 .hero__title .line { display: block; overflow: hidden; padding-bottom: .06em; white-space: nowrap; }
 .hero__title .line > span { display: inline-block; transform: translateY(110%); transition: transform 1.3s var(--ease); }
@@ -125,8 +127,8 @@ h2 { font-size: clamp(34px, 5vw, 60px); line-height: 1.08; margin-bottom: 26px; 
 @keyframes hint { 0%{opacity:0;transform:translateY(0)} 30%{opacity:1} 100%{opacity:0;transform:translateY(16px)} }
 
 /* ---------- reveal: linie budują elementy ---------- */
-.reveal { opacity: 0; transform: translateY(28px); filter: blur(6px); transition: opacity 1s var(--ease), transform 1.2s var(--ease), filter 1s var(--ease); transition-delay: var(--d, 0s); }
-.reveal.in { opacity: 1; transform: none; filter: none; }
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 1s var(--ease), transform 1.2s var(--ease); transition-delay: var(--d, 0s); }
+.reveal.in { opacity: 1; transform: none; }
 
 .facts { list-style: none; padding: 0; margin: 40px 0 0; display: grid; gap: 2px; }
 .facts li { position: relative; display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 18px 0; }
@@ -139,7 +141,7 @@ h2 { font-size: clamp(34px, 5vw, 60px); line-height: 1.08; margin-bottom: 26px; 
 .card {
   position: relative; padding: 30px 28px 32px; border-radius: 20px; background: var(--glass);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); overflow: hidden;
-  transition: opacity 1s var(--ease), transform 1.2s var(--ease), filter 1s var(--ease), background .4s;
+  transition: opacity 1s var(--ease), transform 1.2s var(--ease), background .4s;
   transition-delay: var(--d, 0s);
 }
 /* ramka rysowana linią przy pojawieniu się */
@@ -211,7 +213,7 @@ h2 { font-size: clamp(34px, 5vw, 60px); line-height: 1.08; margin-bottom: 26px; 
   html { scroll-behavior: auto; }
   .reveal, .hero__title .line > span, .card::before, .card__icon { transition: none !important; }
   .grain { animation: none; }
-  .loader__logo .draw, .lg-fill, .loader__txt { animation-duration: .01s; animation-delay: 0s; }
+  .loader__logo .draw, .lg-fill, .loader__txt { animation-duration: .01s !important; animation-delay: 0s !important; }
   .lg-shine { display: none; }
-  .loader__logo { animation: none; }
+  .loader.go .loader__logo { animation: none; }
 }

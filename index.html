@@ -46,20 +46,13 @@
         </linearGradient>
         <clipPath id="lg-clip"><rect x="2" y="2" width="396" height="100" /></clipPath>
       </defs>
-      <!-- 1. białe linie rysują kontur logo, 2. wypełnienie w kolorach marki, 3. błysk -->
+      <!-- 1. jedna ciągła biała linia rysuje logo, 2. wypełnienie w kolorach marki, 3. błysk,
+           4. logo rozpryskuje się w cząsteczki WebGL (ten sam kształt: LOGO_PATH w js/main.js) -->
       <rect class="lg-fill" x="2" y="2" width="396" height="100" fill="#1a3c6e" />
-      <rect class="lg-fill lg-fill--mid" x="84" y="2" width="96" height="100" fill="#f2f4f8" />
-      <path class="lg-fill lg-fill--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z" fill="#1a3c6e" />
-      <g class="lg-lines lg-lines--glow" aria-hidden="true">
-        <rect class="draw" x="2" y="2" width="396" height="100" />
-        <path class="draw" d="M84 2 V102 M180 2 V102" />
-        <path class="draw draw--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z M92 40 L110 22 L121 40 L132 22 L143 40 L154 22 L172 40 M92 40 L172 40 M121 40 L132 86 L143 40" />
-      </g>
-      <g class="lg-lines">
-        <rect class="draw" x="2" y="2" width="396" height="100" />
-        <path class="draw" d="M84 2 V102 M180 2 V102" />
-        <path class="draw draw--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z M92 40 L110 22 L121 40 L132 22 L143 40 L154 22 L172 40 M92 40 L172 40 M121 40 L132 86 L143 40" />
-      </g>
+      <rect class="lg-fill" x="84" y="2" width="96" height="100" fill="#f2f4f8" />
+      <path class="lg-fill" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z" fill="#1a3c6e" />
+      <path class="draw draw--glow" pathLength="1" d="M2 2 H398 V102 H2 Z M84 2 V102 M180 2 V102 M92 40 L110 22 L154 22 L172 40 L132 86 Z M92 40 L172 40 M110 22 L121 40 L132 22 L143 40 L154 22 M121 40 L132 86 L143 40" />
+      <path class="draw" pathLength="1" d="M2 2 H398 V102 H2 Z M84 2 V102 M180 2 V102 M92 40 L110 22 L154 22 L172 40 L132 86 Z M92 40 L172 40 M110 22 L121 40 L132 22 L143 40 L154 22 M121 40 L132 86 L143 40" />
       <text class="loader__txt" x="43" y="76" text-anchor="middle">M</text>
       <text class="loader__txt" x="288" y="76" text-anchor="middle">dentic</text>
       <rect class="lg-shine" x="-120" y="2" width="110" height="100" fill="url(#lg-shine)" clip-path="url(#lg-clip)" />
