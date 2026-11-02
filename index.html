@@ -36,12 +36,31 @@
 <body>
   <!-- ===== Intro: logo rysuje się liniami ===== -->
   <div class="loader" aria-hidden="true">
-    <svg class="loader__logo" viewBox="0 0 400 104">
-      <rect class="draw" x="2" y="2" width="396" height="100" />
-      <path class="draw" d="M84 2 V102 M180 2 V102" />
-      <path class="draw" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z M92 40 L110 22 L121 40 L132 22 L143 40 L154 22 L172 40 M92 40 L172 40 M121 40 L132 86 L143 40" />
+    <svg class="loader__logo" viewBox="-12 -12 424 128">
+      <defs>
+        <filter id="lg-glow" x="-20%" y="-40%" width="140%" height="180%">
+          <feGaussianBlur stdDeviation="3.5" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <linearGradient id="lg-shine" x1="0" x2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity="0" />
+          <stop offset=".5" stop-color="#fff" stop-opacity=".55" />
+          <stop offset="1" stop-color="#fff" stop-opacity="0" />
+        </linearGradient>
+        <clipPath id="lg-clip"><rect x="2" y="2" width="396" height="100" /></clipPath>
+      </defs>
+      <!-- 1. białe linie rysują kontur logo, 2. wypełnienie w kolorach marki, 3. błysk -->
+      <rect class="lg-fill" x="2" y="2" width="396" height="100" fill="#1a3c6e" />
+      <rect class="lg-fill lg-fill--mid" x="84" y="2" width="96" height="100" fill="#f2f4f8" />
+      <path class="lg-fill lg-fill--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z" fill="#1a3c6e" />
+      <g class="lg-lines" filter="url(#lg-glow)">
+        <rect class="draw" x="2" y="2" width="396" height="100" />
+        <path class="draw" d="M84 2 V102 M180 2 V102" />
+        <path class="draw draw--gem" d="M110 22 L154 22 L172 40 L132 86 L92 40 Z M92 40 L110 22 L121 40 L132 22 L143 40 L154 22 L172 40 M92 40 L172 40 M121 40 L132 86 L143 40" />
+      </g>
       <text class="loader__txt" x="43" y="76" text-anchor="middle">M</text>
       <text class="loader__txt" x="288" y="76" text-anchor="middle">dentic</text>
+      <rect class="lg-shine" x="-120" y="2" width="110" height="100" fill="url(#lg-shine)" clip-path="url(#lg-clip)" />
     </svg>
   </div>
 
@@ -158,7 +177,7 @@
         <div class="contact">
           <div class="contact__item reveal">
             <h3>Adres</h3>
-            <p>ul. Juliusza Słowackiego 69<br>09-400 Maszewo Duże<br><a href="https://www.google.com/maps/search/?api=1&amp;query=M-dentic+Juliusza+S%C5%82owackiego+69+09-400+Maszewo+Du%C5%BCe" target="_blank" rel="noopener">Wyznacz trasę</a></p>
+            <p><span class="nowrap">ul. Juliusza Słowackiego 69</span><br>09-400 Maszewo Duże<br><a href="https://www.google.com/maps/search/?api=1&amp;query=M-dentic+Juliusza+S%C5%82owackiego+69+09-400+Maszewo+Du%C5%BCe" target="_blank" rel="noopener">Wyznacz trasę</a></p>
           </div>
           <div class="contact__item reveal">
             <h3>Telefon</h3>

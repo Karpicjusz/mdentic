@@ -34,7 +34,7 @@ function hideLoader() {
   setTimeout(startReveals, 250);
   window.dispatchEvent(new Event('mdentic:ready'));
 }
-const minIntro = new Promise(r => setTimeout(r, reduceMotion ? 200 : 2000));
+const minIntro = new Promise(r => setTimeout(r, reduceMotion ? 200 : 2900));
 Promise.all([minIntro, document.fonts.ready]).then(hideLoader);
 setTimeout(hideLoader, 5000); // zabezpieczenie
 
@@ -375,9 +375,9 @@ async function initGL(THREE) {
     viewW = viewH * camera.aspect;
 
     const mobile = w < 760 || w / h < 0.9;
-    const cx = mobile ? 0 : viewW * 0.23;
+    const cx = mobile ? 0 : viewW * 0.25;
     const cy = mobile ? viewH * 0.24 : 0;
-    const s = mobile ? Math.min(viewW * 0.34, viewH * 0.17) : Math.min(viewH * 0.33, viewW * 0.19);
+    const s = mobile ? Math.min(viewW * 0.34, viewH * 0.17) : Math.min(viewH * 0.33, viewW * 0.17);
     const set = (i, x, y, sx, sy = sx, sz = sx) => { uniforms.uOff.value[i].set(x, y, 0); uniforms.uScl.value[i].set(sx, sy, sz); };
     set(0, cx, cy, s);
     set(1, cx, cy - s * 0.05, s * 0.92);
