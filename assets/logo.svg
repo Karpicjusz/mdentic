@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 104" role="img" aria-label="MDentic">
+  <rect x="2" y="2" width="396" height="100" fill="#1a3c6e" stroke="#ffffff" stroke-width="3"/>
+  <rect x="84" y="2" width="96" height="100" fill="#f2f4f8"/>
+  <text x="43" y="76" text-anchor="middle" font-family="'Open Sans','Segoe UI',Arial,sans-serif" font-size="64" fill="#ffffff">M</text>
+  <g fill="#1a3c6e" stroke="#f2f4f8" stroke-width="2.4" stroke-linejoin="round">
+    <path d="M110 22 L154 22 L172 40 L132 86 L92 40 Z"/>
+    <path d="M92 40 L110 22 L121 40 L132 22 L143 40 L154 22 L172 40 M92 40 L172 40 M121 40 L132 86 L143 40" fill="none"/>
+  </g>
+  <text x="288" y="76" text-anchor="middle" font-family="'Open Sans','Segoe UI',Arial,sans-serif" font-size="64" fill="#ffffff">dentic</text>
+</svg>
